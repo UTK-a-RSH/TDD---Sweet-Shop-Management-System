@@ -1,36 +1,33 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { CreateUserDto, LoginDto } from "../types/user.types";
 import { UserRepository } from "../repositories/UserRepository";
 import { validateEmail, validatePassword } from "../utils/validators";
 import { ConflictError, UnauthorizedError, ValidationError } from "../utils/errors";
+import { generateToken } from "../utils/jwt";
 
+// Types
 export type RegisterInput = CreateUserDto;
-
-export type RegisterResult = {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: "user" | "admin";
-  };
-};
-
 export type LoginInput = LoginDto;
 
-export type LoginResult = {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: "user" | "admin";
-  };
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: "user" | "admin";
+}
+
+export interface RegisterResult {
+  user: UserData;
+}
+
+export interface LoginResult {
+  user: UserData;
   token: string;
   isAdmin: boolean;
-};
+}
 
+// Constants
 const SALT_ROUNDS = 10;
-const JWT_EXPIRES_IN = "7d";
 
 /**
  * AuthService handles user authentication business logic.
@@ -114,16 +111,12 @@ export class AuthService {
       throw new UnauthorizedError("Invalid email or password", "INVALID_CREDENTIALS");
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET as string,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
+    // Generate JWT token using centralized utility
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     return {
       user: {
