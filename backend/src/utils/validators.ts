@@ -1,4 +1,4 @@
-import { ValidationError } from "./errors";
+import { ValidationError, ForbiddenError } from "./errors";
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 const MIN_PASSWORD_LENGTH = 6;
@@ -234,5 +234,15 @@ export function validateInventoryQuantity(quantity: number | undefined): void {
   }
   if (!Number.isInteger(quantity)) {
     throw new ValidationError("Quantity must be a whole number", "INVALID_QUANTITY");
+  }
+}
+
+/**
+ * Requires admin role for an operation.
+ * @throws ForbiddenError if role is not admin
+ */
+export function requireAdmin(role: string, operation: string): void {
+  if (role !== "admin") {
+    throw new ForbiddenError(`Only admin can ${operation}`);
   }
 }

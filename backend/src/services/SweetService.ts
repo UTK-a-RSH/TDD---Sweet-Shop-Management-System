@@ -1,7 +1,7 @@
 import { SweetRepository } from "../repositories/SweetRepository";
 import { CreateSweetDto, UpdateSweetDto, SearchSweetsQuery, PurchaseDto, RestockDto } from "../types/sweet.types";
-import { ConflictError, NotFoundError, ForbiddenError, ValidationError } from "../utils/errors";
-import { validateSweetInput, validateSweetUpdateInput, validateSearchQuery, validateInventoryQuantity } from "../utils/validators";
+import { ConflictError, NotFoundError, ValidationError } from "../utils/errors";
+import { validateSweetInput, validateSweetUpdateInput, validateSearchQuery, validateInventoryQuantity, requireAdmin } from "../utils/validators";
 
 type SweetRecord = {
   id: string;
@@ -88,9 +88,7 @@ export const SweetService = {
 
   async deleteSweet(id: string, role: string): Promise<DeleteResult> {
     // Check authorization first
-    if (role !== "admin") {
-      throw new ForbiddenError("Only admin can delete sweets");
-    }
+    requireAdmin(role, "delete sweets");
 
     // Validate id
     if (!id || !id.trim()) {
@@ -167,9 +165,7 @@ export const SweetService = {
 
   async restock(id: string, data: RestockDto, role: string): Promise<RestockResult> {
     // Check authorization first
-    if (role !== "admin") {
-      throw new ForbiddenError("Only admin can restock sweets");
-    }
+    requireAdmin(role, "restock sweets");
 
     // Validate quantity (before DB call)
     validateInventoryQuantity(data.quantity);
