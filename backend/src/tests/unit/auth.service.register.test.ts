@@ -1,12 +1,16 @@
 import { AuthService } from "../../services/AuthService";
+import { CreateUserDto, UserResponse } from "../../types/user.types";
 
-const mockUserRepoFindByEmail = jest.fn();
-const mockUserRepoCreate = jest.fn();
+type CreateUserInput = CreateUserDto;
+type UserRecord = Pick<UserResponse, "name" | "email" | "role"> & { id: string };
+
+const mockUserRepoFindByEmail = jest.fn<Promise<UserRecord | null>, [string]>();
+const mockUserRepoCreate = jest.fn<Promise<UserRecord>, [CreateUserInput]>();
 
 jest.mock("../../repositories/UserRepository", () => ({
   UserRepository: {
-    findByEmail: (...args: unknown[]) => mockUserRepoFindByEmail(...args),
-    create: (...args: unknown[]) => mockUserRepoCreate(...args),
+    findByEmail: (email: string) => mockUserRepoFindByEmail(email),
+    create: (data: CreateUserInput) => mockUserRepoCreate(data),
   },
 }));
 
@@ -14,8 +18,8 @@ describe("AuthService.register", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUserRepoFindByEmail.mockResolvedValue(null);
-    mockUserRepoCreate.mockImplementation((data) =>
-      Promise.resolve({ id: "generated-id", ...data })
+    mockUserRepoCreate.mockImplementation((data: CreateUserInput) =>
+      Promise.resolve({ id: "generated-id", role: "user" as const, name: data.name, email: data.email })
     );
   });
 
@@ -33,9 +37,12 @@ describe("AuthService.register", () => {
   });
 
   it("rejects duplicate email", async () => {
-    mockUserRepoFindByEmail
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: "existing-id" });
+    mockUserRepoFindByEmail.mockResolvedValueOnce({
+      id: "existing-id",
+      name: "Existing User",
+      email: "duplicate@example.com",
+      role: "user" as const,
+    });
 
     await expect(
       AuthService.register({
