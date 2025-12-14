@@ -129,3 +129,48 @@ export function validateSweetInput(input: {
     quantity: input.quantity!,
   };
 }
+
+/**
+ * Validates sweet input for update (partial).
+ * Only validates fields that are provided.
+ * @returns Sanitized input with trimmed strings
+ * @throws ValidationError if any provided field is invalid
+ */
+export function validateSweetUpdateInput(input: {
+  name?: string;
+  category?: string;
+  price?: number;
+  quantity?: number;
+}): { name?: string; category?: string; price?: number; quantity?: number } {
+  const result: { name?: string; category?: string; price?: number; quantity?: number } = {};
+
+  if (input.name !== undefined) {
+    // Empty string is invalid for name
+    if (input.name === "" || input.name.trim() === "") {
+      throw new ValidationError("Name cannot be empty", "EMPTY_NAME");
+    }
+    validateSweetName(input.name);
+    result.name = input.name.trim();
+  }
+
+  if (input.category !== undefined) {
+    // Empty string is invalid for category
+    if (input.category === "" || input.category.trim() === "") {
+      throw new ValidationError("Category cannot be empty", "EMPTY_CATEGORY");
+    }
+    validateSweetCategory(input.category);
+    result.category = input.category.trim();
+  }
+
+  if (input.price !== undefined) {
+    validateSweetPrice(input.price);
+    result.price = input.price;
+  }
+
+  if (input.quantity !== undefined) {
+    validateSweetQuantity(input.quantity);
+    result.quantity = input.quantity;
+  }
+
+  return result;
+}
