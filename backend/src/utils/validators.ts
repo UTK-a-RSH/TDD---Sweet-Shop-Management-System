@@ -41,3 +41,91 @@ export function validateRegisterInput(input: {
   validateEmail(input.email);
   validatePassword(input.password);
 }
+
+// Sweet validation constants
+const MIN_SWEET_NAME_LENGTH = 2;
+const MAX_SWEET_NAME_LENGTH = 100;
+
+/**
+ * Validates sweet name.
+ * @throws ValidationError if name is invalid
+ */
+export function validateSweetName(name: string | undefined): void {
+  const trimmed = name?.trim() || "";
+  if (!trimmed) {
+    throw new ValidationError("Name is required", "MISSING_NAME");
+  }
+  if (trimmed.length < MIN_SWEET_NAME_LENGTH) {
+    throw new ValidationError(
+      `Name must be at least ${MIN_SWEET_NAME_LENGTH} characters`,
+      "NAME_TOO_SHORT"
+    );
+  }
+  if (trimmed.length > MAX_SWEET_NAME_LENGTH) {
+    throw new ValidationError(
+      `Name must be at most ${MAX_SWEET_NAME_LENGTH} characters`,
+      "NAME_TOO_LONG"
+    );
+  }
+}
+
+/**
+ * Validates sweet category.
+ * @throws ValidationError if category is invalid
+ */
+export function validateSweetCategory(category: string | undefined): void {
+  const trimmed = category?.trim() || "";
+  if (!trimmed) {
+    throw new ValidationError("Category is required", "MISSING_CATEGORY");
+  }
+}
+
+/**
+ * Validates sweet price.
+ * @throws ValidationError if price is invalid
+ */
+export function validateSweetPrice(price: number | undefined): void {
+  if (typeof price !== "number" || isNaN(price)) {
+    throw new ValidationError("Price must be a valid number", "INVALID_PRICE");
+  }
+  if (price < 0) {
+    throw new ValidationError("Price cannot be negative", "NEGATIVE_PRICE");
+  }
+}
+
+/**
+ * Validates sweet quantity.
+ * @throws ValidationError if quantity is invalid
+ */
+export function validateSweetQuantity(quantity: number | undefined): void {
+  if (typeof quantity !== "number" || quantity < 0) {
+    throw new ValidationError("Quantity cannot be negative", "NEGATIVE_QUANTITY");
+  }
+  if (!Number.isInteger(quantity)) {
+    throw new ValidationError("Quantity must be an integer", "INVALID_QUANTITY");
+  }
+}
+
+/**
+ * Validates sweet input for creation.
+ * @returns Sanitized input with trimmed strings
+ * @throws ValidationError if any field is invalid
+ */
+export function validateSweetInput(input: {
+  name?: string;
+  category?: string;
+  price?: number;
+  quantity?: number;
+}): { name: string; category: string; price: number; quantity: number } {
+  validateSweetName(input.name);
+  validateSweetCategory(input.category);
+  validateSweetPrice(input.price);
+  validateSweetQuantity(input.quantity);
+
+  return {
+    name: input.name!.trim(),
+    category: input.category!.trim(),
+    price: input.price!,
+    quantity: input.quantity!,
+  };
+}
