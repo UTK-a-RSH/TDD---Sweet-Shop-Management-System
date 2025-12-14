@@ -1,7 +1,7 @@
 import { SweetRepository } from "../repositories/SweetRepository";
-import { CreateSweetDto, UpdateSweetDto, SearchSweetsQuery } from "../types/sweet.types";
-import { ConflictError, NotFoundError, ForbiddenError } from "../utils/errors";
-import { validateSweetInput, validateSweetUpdateInput, validateSearchQuery } from "../utils/validators";
+import { CreateSweetDto, UpdateSweetDto, SearchSweetsQuery, PurchaseDto, RestockDto } from "../types/sweet.types";
+import { ConflictError, NotFoundError, ForbiddenError, ValidationError } from "../utils/errors";
+import { validateSweetInput, validateSweetUpdateInput, validateSearchQuery, validateInventoryQuantity } from "../utils/validators";
 
 type SweetRecord = {
   id: string;
@@ -20,6 +20,19 @@ type DeleteResult = {
 type ListResult = {
   sweets: SweetRecord[];
   total: number;
+};
+
+type PurchaseResult = {
+  sweet: SweetRecord;
+  purchased: number;
+  remaining: number;
+};
+
+type RestockResult = {
+  sweet: SweetRecord;
+  added: number;
+  previousQuantity: number;
+  newQuantity: number;
 };
 
 export const SweetService = {
@@ -117,6 +130,68 @@ export const SweetService = {
     return {
       sweets,
       total: sweets.length,
+    };
+  },
+
+  async purchase(id: string, data: PurchaseDto): Promise<PurchaseResult> {
+    // Validate quantity first (before DB call)
+    validateInventoryQuantity(data.quantity);
+
+    // Check if sweet exists
+    const existing = await SweetRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError("Sweet not found");
+    }
+
+    // Check if sufficient stock
+    if (data.quantity > existing.quantity) {
+      throw new ValidationError(
+        `Insufficient stock. Only ${existing.quantity} available`,
+        "INSUFFICIENT_STOCK"
+      );
+    }
+
+    // Update quantity
+    const newQuantity = existing.quantity - data.quantity;
+    const sweet = await SweetRepository.updateQuantity(id, newQuantity);
+    if (!sweet) {
+      throw new NotFoundError("Sweet not found");
+    }
+
+    return {
+      sweet,
+      purchased: data.quantity,
+      remaining: newQuantity,
+    };
+  },
+
+  async restock(id: string, data: RestockDto, role: string): Promise<RestockResult> {
+    // Check authorization first
+    if (role !== "admin") {
+      throw new ForbiddenError("Only admin can restock sweets");
+    }
+
+    // Validate quantity (before DB call)
+    validateInventoryQuantity(data.quantity);
+
+    // Check if sweet exists
+    const existing = await SweetRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError("Sweet not found");
+    }
+
+    // Update quantity
+    const newQuantity = existing.quantity + data.quantity;
+    const sweet = await SweetRepository.updateQuantity(id, newQuantity);
+    if (!sweet) {
+      throw new NotFoundError("Sweet not found");
+    }
+
+    return {
+      sweet,
+      added: data.quantity,
+      previousQuantity: existing.quantity,
+      newQuantity,
     };
   },
 };

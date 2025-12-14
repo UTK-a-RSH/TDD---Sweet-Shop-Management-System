@@ -97,4 +97,16 @@ export const SweetRepository = {
     const result = await Sweet.findByIdAndDelete(id);
     return result !== null;
   },
+
+  async updateQuantity(id: string, quantity: number): Promise<SweetRecord | null> {
+    const sweet = await Sweet.findByIdAndUpdate(id, { quantity }, { new: true });
+    if (!sweet) return null;
+    return {
+      id: sweet._id.toString(),
+      name: sweet.name,
+      category: sweet.category,
+      price: sweet.price,
+      quantity: sweet.quantity,
+    };
+  },
 };

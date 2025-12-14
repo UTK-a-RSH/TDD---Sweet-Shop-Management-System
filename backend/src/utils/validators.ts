@@ -220,3 +220,19 @@ export function validateSearchQuery(query: {
 
   return sanitized;
 }
+
+/**
+ * Validates inventory quantity for purchase/restock operations.
+ * @throws ValidationError if quantity is invalid
+ */
+export function validateInventoryQuantity(quantity: number | undefined): void {
+  if (typeof quantity !== "number" || isNaN(quantity)) {
+    throw new ValidationError("Quantity must be a valid number", "INVALID_QUANTITY");
+  }
+  if (quantity <= 0) {
+    throw new ValidationError("Quantity must be greater than zero", "INVALID_QUANTITY");
+  }
+  if (!Number.isInteger(quantity)) {
+    throw new ValidationError("Quantity must be a whole number", "INVALID_QUANTITY");
+  }
+}
