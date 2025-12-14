@@ -1,6 +1,11 @@
 import { AuthService } from "../../services/AuthService";
 import { LoginDto, UserResponse } from "../../types/user.types";
 
+const JWT_SECRET_TEST = "5a33eb9cb3bc20da649b77a9e840cf03";
+
+// Set JWT_SECRET in test environment
+process.env.JWT_SECRET = JWT_SECRET_TEST;
+
 // Types for repository mocks (login needs password for comparison)
 type UserWithPassword = Pick<UserResponse, "name" | "email" | "role"> & {
   id: string;
@@ -72,7 +77,7 @@ describe("AuthService.login", () => {
           email: "john@example.com",
           role: "user",
         }),
-        undefined, // JWT_SECRET is undefined in test env
+        JWT_SECRET_TEST, // JWT_SECRET is undefined in test env
         { expiresIn: "7d" }
       );
     });
@@ -95,7 +100,7 @@ describe("AuthService.login", () => {
       expect(result.user.role).toBe("admin");
       expect(jwt.sign).toHaveBeenCalledWith(
         expect.objectContaining({ role: "admin" }),
-        undefined, // JWT_SECRET is undefined in test env
+        JWT_SECRET_TEST,
         { expiresIn: "7d" }
       );
     });
