@@ -1,4 +1,5 @@
 import Sweet, { ISweet, ISweetDocument } from "../db/schemas/sweet.model";
+import { SearchSweetsQuery } from "../types/sweet.types";
 
 type CreateSweetInput = Pick<ISweet, "name" | "category" | "price" | "quantity">;
 type UpdateSweetInput = Partial<CreateSweetInput>;
@@ -27,6 +28,46 @@ export const SweetRepository = {
       price: sweet.price,
       quantity: sweet.quantity,
     };
+  },
+
+  async findAll(): Promise<SweetRecord[]> {
+    const sweets = await Sweet.find();
+    return sweets.map((sweet) => ({
+      id: sweet._id.toString(),
+      name: sweet.name,
+      category: sweet.category,
+      price: sweet.price,
+      quantity: sweet.quantity,
+    }));
+  },
+
+  async search(query: SearchSweetsQuery): Promise<SweetRecord[]> {
+    const filter: Record<string, unknown> = {};
+
+    if (query.name) {
+      filter.name = { $regex: new RegExp(query.name, "i") };
+    }
+    if (query.category) {
+      filter.category = { $regex: new RegExp(`^${query.category}$`, "i") };
+    }
+    if (query.minPrice !== undefined || query.maxPrice !== undefined) {
+      filter.price = {};
+      if (query.minPrice !== undefined) {
+        (filter.price as Record<string, number>).$gte = query.minPrice;
+      }
+      if (query.maxPrice !== undefined) {
+        (filter.price as Record<string, number>).$lte = query.maxPrice;
+      }
+    }
+
+    const sweets = await Sweet.find(filter);
+    return sweets.map((sweet) => ({
+      id: sweet._id.toString(),
+      name: sweet.name,
+      category: sweet.category,
+      price: sweet.price,
+      quantity: sweet.quantity,
+    }));
   },
 
   async create(data: CreateSweetInput): Promise<SweetRecord> {

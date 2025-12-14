@@ -1,6 +1,6 @@
 import { SweetRepository } from "../repositories/SweetRepository";
-import { CreateSweetDto, UpdateSweetDto } from "../types/sweet.types";
-import { ConflictError, NotFoundError, ForbiddenError } from "../utils/errors";
+import { CreateSweetDto, UpdateSweetDto, SearchSweetsQuery } from "../types/sweet.types";
+import { ConflictError, NotFoundError, ForbiddenError, ValidationError } from "../utils/errors";
 import { validateSweetInput, validateSweetUpdateInput } from "../utils/validators";
 
 type SweetRecord = {
@@ -15,6 +15,11 @@ type DeleteResult = {
   success: boolean;
   message: string;
   deleted: { id: string; name: string };
+};
+
+type ListResult = {
+  sweets: SweetRecord[];
+  total: number;
 };
 
 export const SweetService = {
@@ -95,6 +100,53 @@ export const SweetService = {
       success: true,
       message: "Sweet deleted successfully",
       deleted: { id: existing.id, name: existing.name },
+    };
+  },
+
+  async listAll(): Promise<ListResult> {
+    const sweets = await SweetRepository.findAll();
+    return {
+      sweets,
+      total: sweets.length,
+    };
+  },
+
+  async search(query: SearchSweetsQuery): Promise<ListResult> {
+    // Validate price range
+    if (query.minPrice !== undefined && query.minPrice < 0) {
+      throw new ValidationError("Minimum price cannot be negative");
+    }
+    if (query.maxPrice !== undefined && query.maxPrice < 0) {
+      throw new ValidationError("Maximum price cannot be negative");
+    }
+    if (
+      query.minPrice !== undefined &&
+      query.maxPrice !== undefined &&
+      query.minPrice > query.maxPrice
+    ) {
+      throw new ValidationError("Minimum price cannot be greater than maximum price");
+    }
+
+    // Build sanitized query (trim strings, ignore empty)
+    const sanitizedQuery: SearchSweetsQuery = {};
+
+    if (query.name && query.name.trim()) {
+      sanitizedQuery.name = query.name.trim();
+    }
+    if (query.category && query.category.trim()) {
+      sanitizedQuery.category = query.category.trim();
+    }
+    if (query.minPrice !== undefined) {
+      sanitizedQuery.minPrice = query.minPrice;
+    }
+    if (query.maxPrice !== undefined) {
+      sanitizedQuery.maxPrice = query.maxPrice;
+    }
+
+    const sweets = await SweetRepository.search(sanitizedQuery);
+    return {
+      sweets,
+      total: sweets.length,
     };
   },
 };
