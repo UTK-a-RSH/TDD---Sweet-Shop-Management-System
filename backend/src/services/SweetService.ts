@@ -1,7 +1,7 @@
 import { SweetRepository } from "../repositories/SweetRepository";
 import { CreateSweetDto, UpdateSweetDto, SearchSweetsQuery } from "../types/sweet.types";
-import { ConflictError, NotFoundError, ForbiddenError, ValidationError } from "../utils/errors";
-import { validateSweetInput, validateSweetUpdateInput } from "../utils/validators";
+import { ConflictError, NotFoundError, ForbiddenError } from "../utils/errors";
+import { validateSweetInput, validateSweetUpdateInput, validateSearchQuery } from "../utils/validators";
 
 type SweetRecord = {
   id: string;
@@ -112,37 +112,7 @@ export const SweetService = {
   },
 
   async search(query: SearchSweetsQuery): Promise<ListResult> {
-    // Validate price range
-    if (query.minPrice !== undefined && query.minPrice < 0) {
-      throw new ValidationError("Minimum price cannot be negative");
-    }
-    if (query.maxPrice !== undefined && query.maxPrice < 0) {
-      throw new ValidationError("Maximum price cannot be negative");
-    }
-    if (
-      query.minPrice !== undefined &&
-      query.maxPrice !== undefined &&
-      query.minPrice > query.maxPrice
-    ) {
-      throw new ValidationError("Minimum price cannot be greater than maximum price");
-    }
-
-    // Build sanitized query (trim strings, ignore empty)
-    const sanitizedQuery: SearchSweetsQuery = {};
-
-    if (query.name && query.name.trim()) {
-      sanitizedQuery.name = query.name.trim();
-    }
-    if (query.category && query.category.trim()) {
-      sanitizedQuery.category = query.category.trim();
-    }
-    if (query.minPrice !== undefined) {
-      sanitizedQuery.minPrice = query.minPrice;
-    }
-    if (query.maxPrice !== undefined) {
-      sanitizedQuery.maxPrice = query.maxPrice;
-    }
-
+    const sanitizedQuery = validateSearchQuery(query);
     const sweets = await SweetRepository.search(sanitizedQuery);
     return {
       sweets,

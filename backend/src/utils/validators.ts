@@ -174,3 +174,49 @@ export function validateSweetUpdateInput(input: {
 
   return result;
 }
+
+/**
+ * Validates and sanitizes search query for sweets.
+ * @returns Sanitized query with trimmed strings and only non-empty values
+ * @throws ValidationError if price range is invalid
+ */
+export function validateSearchQuery(query: {
+  name?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+}): { name?: string; category?: string; minPrice?: number; maxPrice?: number } {
+  const { minPrice, maxPrice } = query;
+
+  // Validate price range
+  if (minPrice !== undefined && minPrice < 0) {
+    throw new ValidationError("Minimum price cannot be negative", "INVALID_MIN_PRICE");
+  }
+  if (maxPrice !== undefined && maxPrice < 0) {
+    throw new ValidationError("Maximum price cannot be negative", "INVALID_MAX_PRICE");
+  }
+  if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
+    throw new ValidationError(
+      "Minimum price cannot be greater than maximum price",
+      "INVALID_PRICE_RANGE"
+    );
+  }
+
+  // Build sanitized query (trim strings, ignore empty)
+  const sanitized: { name?: string; category?: string; minPrice?: number; maxPrice?: number } = {};
+
+  if (query.name && query.name.trim()) {
+    sanitized.name = query.name.trim();
+  }
+  if (query.category && query.category.trim()) {
+    sanitized.category = query.category.trim();
+  }
+  if (minPrice !== undefined) {
+    sanitized.minPrice = minPrice;
+  }
+  if (maxPrice !== undefined) {
+    sanitized.maxPrice = maxPrice;
+  }
+
+  return sanitized;
+}
