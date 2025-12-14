@@ -31,7 +31,7 @@ describe("SweetService.deleteSweet", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     mockSweetRepoFindById.mockResolvedValue(existingSweet);
     mockSweetRepoDelete.mockResolvedValue(true);
   });
@@ -135,8 +135,7 @@ describe("SweetService.deleteSweet", () => {
     });
 
     it("handles whitespace-only sweet id", async () => {
-      mockSweetRepoFindById.mockResolvedValueOnce(null);
-
+      // No mock needed - validation fails before findById is called
       await expect(
         SweetService.deleteSweet("   ", "admin")
       ).rejects.toThrow(/id|not found|invalid/i);
@@ -153,6 +152,8 @@ describe("SweetService.deleteSweet", () => {
     });
 
     it("handles repository delete failure gracefully", async () => {
+      // Explicitly set findById to return existing sweet (ensure it's not null)
+      mockSweetRepoFindById.mockResolvedValueOnce(existingSweet);
       mockSweetRepoDelete.mockResolvedValueOnce(false);
 
       await expect(
