@@ -4,3 +4,5 @@ dist
 .env.local
 npm-debug.log
 src_backup
+coverage/
+.DS_Store
