@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { AuthController } from "../controllers";
+import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
@@ -8,13 +9,13 @@ const router = Router();
  * @desc    Register a new user
  * @access  Public
  */
-router.post("/register", AuthController.register);
+router.post("/register", asyncHandler(AuthController.register));
 
 /**
  * @route   POST /api/auth/login
  * @desc    Authenticate user and get token
  * @access  Public
  */
-router.post("/login", AuthController.login);
+router.post("/login", asyncHandler(AuthController.login));
 
 export default router;
