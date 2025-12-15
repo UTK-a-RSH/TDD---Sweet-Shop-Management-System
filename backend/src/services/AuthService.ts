@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { CreateUserDto, LoginDto } from "../types/user.types";
 import { UserRepository } from "../repositories/UserRepository";
-import { validateEmail, validatePassword } from "../utils/validators";
+import { validateEmail, validatePassword, validateRegisterInput } from "../utils/validators";
 import { ConflictError, UnauthorizedError, ValidationError } from "../utils/errors";
 import { generateToken } from "../utils/jwt";
 
@@ -43,9 +43,8 @@ export class AuthService {
   static async register(input: RegisterInput): Promise<RegisterResult> {
     const { name, email, password } = input;
 
-    // Validate input
-    validateEmail(email);
-    validatePassword(password);
+    // Validate all input fields
+    validateRegisterInput({ name, email, password });
 
     // Check for duplicate email
     const existing = await UserRepository.findByEmail(email);
