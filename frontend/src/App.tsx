@@ -1,21 +1,40 @@
+import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { LoginForm } from './features/auth/components/LoginForm';
+import { RegisterForm } from './features/auth/components/RegisterForm';
+import { ToastProvider } from './context/ToastContext';
 
-import type { JSX } from 'react';
-import { useState } from 'react';
-
-function App(): JSX.Element {
-  const [isBlue, setIsBlue] = useState(false);
+function App() {
+  const location = useLocation();
+  const isLogin = location.pathname === '/login';
 
   return (
-    <div className={`min-h-screen flex items-center justify-center ${isBlue ? 'bg-blue-100' : 'bg-gray-100'} transition-colors`}>
-      <button
-        className="px-6 py-3 rounded-full bg-green-600 text-white shadow-lg transition-colors duration-200 hover:bg-pink-600 active:scale-95"
-        onClick={() => setIsBlue(!isBlue)}
-      >
-        Beautiful Button
-      </button>
-    </div>
+    <ToastProvider>
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md mb-6 flex justify-center space-x-4">
+          <Link
+            to="/login"
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${isLogin ? 'bg-zinc-800 text-zinc-50' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+          >
+            Login
+          </Link>
+          <Link
+            to="/register"
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${!isLogin ? 'bg-zinc-800 text-zinc-50' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+          >
+            Register
+          </Link>
+        </div>
+
+        <Routes>
+          <Route path="/login" element={<LoginForm onSubmit={(data) => console.log('Login:', data)} />} />
+          <Route path="/register" element={<RegisterForm />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </div>
+    </ToastProvider>
   );
 }
 
 export default App;
-  
