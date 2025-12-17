@@ -2,6 +2,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { LoginForm } from './LoginForm';
+import * as authApi from '../api/auth';
+
+// Mock the API module
+vi.mock('../api/auth', () => ({
+    loginUser: vi.fn(),
+}));
 
 describe('LoginForm', () => {
     it('renders login form elements', () => {
@@ -27,9 +33,13 @@ describe('LoginForm', () => {
         expect(handleSubmit).not.toHaveBeenCalled();
     });
 
-    it('calls onSubmit with valid data', async () => {
+    it('calls login API on valid submission', async () => {
         const handleSubmit = vi.fn();
         const user = userEvent.setup();
+
+        // Mock successful login
+        (authApi.loginUser as any).mockResolvedValue({ user: { id: '1' }, token: 'abc' });
+
         render(<LoginForm onSubmit={handleSubmit} />);
 
         await user.type(screen.getByLabelText(/email/i), 'test@example.com');
@@ -39,10 +49,11 @@ describe('LoginForm', () => {
         await user.click(submitButton);
 
         await waitFor(() => {
-            expect(handleSubmit).toHaveBeenCalledWith({
+            expect(authApi.loginUser).toHaveBeenCalledWith({
                 email: 'test@example.com',
                 password: 'password123',
             });
+            expect(handleSubmit).toHaveBeenCalledWith({ user: { id: '1' }, token: 'abc' });
         });
     });
 });
